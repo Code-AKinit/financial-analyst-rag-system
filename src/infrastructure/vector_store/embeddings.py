@@ -2,6 +2,7 @@
 Embedding generation using Gemini API.
 """
 
+import time
 from typing import List
 
 import google.generativeai as genai
@@ -25,11 +26,15 @@ class EmbeddingGenerator:
         """Initialize embedding generator with Gemini API."""
         settings = get_settings()
 
-        # Configure Gemini API
-        genai.configure(api_key=settings.gemini_api_key)
+        # Configure Gemini API with REST transport to avoid gRPC SSL issues
+        genai.configure(
+            api_key=settings.gemini_api_key,
+            transport="rest"  # Use REST instead of gRPC to bypass SSL certificate issues
+        )
 
         self.model_name = settings.embedding_model
-        self.batch_size = 100  # Process in batches to avoid rate limits
+        self.batch_size = 5  # Very small batches to respect rate limits
+        self.delay_between_batches = 5  # Seconds to wait between batches
 
         logger.info("embedding_generator_initialized", model=self.model_name)
 
@@ -88,7 +93,7 @@ class EmbeddingGenerator:
         try:
             embeddings = []
 
-            # Process in batches to avoid rate limits
+            # Process in small batches with delays to respect rate limits
             for i in range(0, len(texts), self.batch_size):
                 batch = texts[i : i + self.batch_size]
 
@@ -100,12 +105,19 @@ class EmbeddingGenerator:
                     )
                     embeddings.append(result["embedding"])
 
+                    # Delay between individual requests to respect free tier limits
+                    time.sleep(0.5)
+
                 logger.debug(
                     "batch_processed",
                     batch_start=i,
                     batch_size=len(batch),
                     total=len(texts),
                 )
+
+                # Longer delay between batches to avoid rate limits
+                if i + self.batch_size < len(texts):
+                    time.sleep(self.delay_between_batches)
 
             logger.info("embeddings_generated", total_count=len(embeddings))
 

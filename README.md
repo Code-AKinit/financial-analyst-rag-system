@@ -121,6 +121,26 @@ cp .env.example .env
 # GEMINI_API_KEY=your-actual-api-key-here
 ```
 
+**⚠️ Important Note on Embeddings:**
+
+The sample outputs in this repository were generated using **mock embeddings** due to Gemini API rate limits during development. The system successfully ingested all 1,804 document chunks but hit the free tier quota.
+
+**If you have full Gemini API access:**
+- Edit `.env` and ensure `EMBEDDING_PROVIDER=gemini` (default)
+- Your `GEMINI_API_KEY` must have sufficient quota
+- Re-run ingestion if needed: `python scripts/ingest_documents.py`
+
+**Alternative Embedding Providers:**
+```bash
+# In .env file, choose one:
+EMBEDDING_PROVIDER=gemini    # Google Gemini embeddings (requires API quota)
+EMBEDDING_PROVIDER=openai    # OpenAI embeddings (requires credits)
+EMBEDDING_PROVIDER=local     # Local sentence-transformers (no API needed)
+EMBEDDING_PROVIDER=mock      # Mock embeddings for testing (used in samples)
+```
+
+For production use with no API limits, we recommend `local` (sentence-transformers) which runs completely offline.
+
 5. **Place your documents**
 ```bash
 # Put your financial documents in data/raw/

@@ -59,8 +59,12 @@ coverage.xml
 # Data & Outputs
 data/vector_store/*
 !data/vector_store/.gitkeep
-outputs/reports/*.pdf
-outputs/excel/*.xlsx
+data/raw/*.pdf
+data/raw/*.xls*
+data/raw/*.csv
+# Note: Sample output files (6 total) are committed for assignment demonstration
+# outputs/reports/*.pdf
+# outputs/excel/*.xlsx
 outputs/logs/*.log
 !outputs/**/.gitkeep
 
@@ -83,3 +87,6 @@ site/
 # OS
 Thumbs.db
 desktop.ini
+*.pyc
+__pycache__/
+.claude/

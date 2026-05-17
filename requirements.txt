@@ -1,5 +1,7 @@
 # LLM & Embeddings
 google-generativeai>=0.3.0
+openai>=1.0.0  # OpenAI embeddings (high quality, good rate limits)
+sentence-transformers>=2.2.0  # Local embeddings (no API limits!)
 
 # Vector Store
 chromadb>=0.4.22
@@ -32,3 +34,4 @@ tenacity>=8.2.0
 
 # Data Science
 numpy>=1.24.0
+xlrd

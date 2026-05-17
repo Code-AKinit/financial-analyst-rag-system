@@ -12,7 +12,7 @@ from src.config.logging_config import get_logger
 from src.config.settings import get_settings
 from src.domain.interfaces.vector_store import VectorStore
 from src.domain.models.document import DocumentChunk, ChunkMetadata
-from src.infrastructure.vector_store.embeddings import EmbeddingGenerator
+from src.infrastructure.vector_store.embedding_factory import get_embedding_generator
 from src.utils.constants import DEFAULT_COLLECTION_NAME
 from src.utils.exceptions import VectorStoreError
 
@@ -61,13 +61,15 @@ class ChromaVectorStore(VectorStore):
             metadata={"description": "Financial documents vector store"},
         )
 
-        # Initialize embedding generator
-        self.embedding_generator = EmbeddingGenerator()
+        # Initialize embedding generator using factory
+        # This allows easy switching between Gemini, OpenAI, Local, or Mock
+        self.embedding_generator = get_embedding_generator()
 
         logger.info(
             "chroma_store_initialized",
             collection=self.collection_name,
             persist_dir=self.persist_directory,
+            embedding_provider=settings.embedding_provider,
         )
 
     def add_documents(
@@ -100,7 +102,29 @@ class ChromaVectorStore(VectorStore):
             # Prepare data for ChromaDB
             ids = [chunk.chunk_id for chunk in chunks]
             documents = [chunk.text for chunk in chunks]
-            metadatas = [chunk.metadata.to_dict() for chunk in chunks]
+            metadatas = []
+
+            # Clean metadata: ChromaDB only accepts str, int, float, bool
+            for chunk in chunks:
+                meta = chunk.metadata.to_dict()
+                clean_meta = {}
+                for k, v in meta.items():
+                    # Skip None values
+                    if v is None:
+                        continue
+                    # Skip empty lists
+                    if isinstance(v, list) and len(v) == 0:
+                        continue
+                    # Convert lists to comma-separated strings
+                    if isinstance(v, list):
+                        clean_meta[k] = ", ".join(str(x) for x in v)
+                    # Keep primitive types
+                    elif isinstance(v, (str, int, float, bool)):
+                        clean_meta[k] = v
+                    # Convert everything else to string
+                    else:
+                        clean_meta[k] = str(v)
+                metadatas.append(clean_meta)
 
             # Add to collection
             self.collection.add(
@@ -323,18 +347,37 @@ class ChromaVectorStore(VectorStore):
 
         for chunk_id, text, metadata, distance in zip(ids, documents, metadatas, distances):
             # Reconstruct ChunkMetadata
+            # Convert string values back to enums
+            from src.utils.constants import DocumentType, FiscalPeriod
+
+            document_type = metadata["document_type"]
+            if isinstance(document_type, str):
+                document_type = DocumentType(document_type)
+
+            fiscal_period = metadata.get("fiscal_period")
+            if fiscal_period and isinstance(fiscal_period, str):
+                try:
+                    fiscal_period = FiscalPeriod(fiscal_period)
+                except ValueError:
+                    fiscal_period = None
+
+            # Convert topics from comma-separated string to list
+            topics = metadata.get("topics", [])
+            if isinstance(topics, str):
+                topics = [t.strip() for t in topics.split(",") if t.strip()]
+
             chunk_metadata = ChunkMetadata(
                 document_name=metadata["document_name"],
-                document_type=metadata["document_type"],
+                document_type=document_type,
                 chunk_index=metadata["chunk_index"],
                 total_chunks=metadata["total_chunks"],
                 chunk_id=chunk_id,
                 page_number=metadata.get("page_number"),
                 section=metadata.get("section"),
-                fiscal_period=metadata.get("fiscal_period"),
+                fiscal_period=fiscal_period,
                 has_table=metadata.get("has_table", False),
                 has_numerical_data=metadata.get("has_numerical_data", False),
-                topics=metadata.get("topics", []),
+                topics=topics,
                 date_range=metadata.get("date_range"),
             )
 

@@ -11,7 +11,7 @@ from src.config.settings import get_settings
 from src.domain.interfaces.vector_store import VectorStore
 from src.domain.models.document import DocumentChunk
 from src.domain.models.query import Query
-from src.infrastructure.vector_store.embeddings import EmbeddingGenerator
+from src.infrastructure.vector_store.embedding_factory import get_embedding_generator
 
 logger = get_logger(__name__)
 
@@ -29,10 +29,10 @@ class RetrievalStrategy:
             vector_store: Vector store instance
         """
         self.vector_store = vector_store
-        self.embedding_generator = EmbeddingGenerator()
+        self.embedding_generator = get_embedding_generator()
         self.settings = get_settings()
 
-        logger.info("retrieval_strategy_initialized")
+        logger.info("retrieval_strategy_initialized", embedding_provider=self.settings.embedding_provider)
 
     def retrieve(
         self,

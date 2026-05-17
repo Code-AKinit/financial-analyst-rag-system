@@ -31,8 +31,11 @@ class GeminiGateway(LLMGateway):
         """Initialize Gemini gateway."""
         settings = get_settings()
 
-        # Configure Gemini API
-        genai.configure(api_key=settings.gemini_api_key)
+        # Configure Gemini API with REST transport (avoids gRPC SSL issues)
+        genai.configure(
+            api_key=settings.gemini_api_key,
+            transport="rest"  # Use REST instead of gRPC to avoid SSL issues
+        )
 
         self.model_name = settings.gemini_model
         self.temperature = settings.gemini_temperature
@@ -49,7 +52,7 @@ class GeminiGateway(LLMGateway):
 
         self.templates = PromptTemplates()
 
-        logger.info("gemini_gateway_initialized", model=self.model_name)
+        logger.info("gemini_gateway_initialized", model=self.model_name, transport="rest")
 
     @retry(
         stop=stop_after_attempt(3),

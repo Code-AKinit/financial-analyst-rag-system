@@ -212,11 +212,18 @@ def main():
 
                     # Show metadata
                     with st.expander("📊 Response Details"):
+                        # Handle output_format - it might be enum or string
+                        output_fmt = response_obj.output_format
+                        if hasattr(output_fmt, 'value'):
+                            output_fmt_str = output_fmt.value
+                        else:
+                            output_fmt_str = str(output_fmt)
+
                         st.json({
                             "Processing Time": f"{response_obj.metadata.processing_time_ms:.0f}ms",
                             "Sources Used": response_obj.metadata.retrieved_chunks_count,
                             "Model": response_obj.metadata.model_used,
-                            "Output Format": response_obj.output_format.value,
+                            "Output Format": output_fmt_str,
                             "Citations": len(response_obj.citations),
                         })
 

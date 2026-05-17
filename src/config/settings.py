@@ -48,9 +48,17 @@ class Settings(BaseSettings):
         default="./data/vector_store",
         description="ChromaDB persistence directory"
     )
+    embedding_provider: str = Field(
+        default="mock",
+        description="Embedding provider: gemini, openai, local, or mock"
+    )
     embedding_model: str = Field(
-        default="models/embedding-001",
+        default="models/text-embedding-004",
         description="Gemini embedding model"
+    )
+    openai_api_key: str = Field(
+        default="",
+        description="OpenAI API key (optional, only if using OpenAI embeddings)"
     )
     chunk_size: int = Field(
         default=1000,

@@ -169,8 +169,17 @@ class ChatbotOrchestrator:
             return response
 
         except Exception as e:
-            logger.error("query_processing_failed", error=str(e), query=query_text[:100])
-            raise FinancialAnalystError(f"Failed to process query: {e}")
+            # Get more details about the error
+            import traceback
+            error_details = traceback.format_exc()
+            logger.error("query_processing_failed", error=str(e), query=query_text[:100], traceback=error_details)
+
+            # Extract more helpful error message
+            error_msg = str(e)
+            if "RetryError" in error_msg:
+                error_msg = "LLM API call failed after retries. Check API key and network connectivity."
+
+            raise FinancialAnalystError(f"Failed to process query: {error_msg}")
 
     def _create_no_results_response(self, query: Query) -> Response:
         """

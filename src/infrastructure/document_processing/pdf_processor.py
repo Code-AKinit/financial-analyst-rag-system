@@ -95,13 +95,16 @@ class PDFProcessor(DocumentProcessor):
             document_type = extract_document_type(file_path.name)
             fiscal_period = extract_fiscal_period(file_path.name, content)
 
+            # Get page count before closing
+            page_count = len(doc)
+
             metadata = DocumentMetadata(
                 document_name=file_path.name,
                 document_type=document_type,
                 file_path=str(file_path),
                 file_size_bytes=file_path.stat().st_size,
                 fiscal_period=fiscal_period,
-                total_pages=len(doc),
+                total_pages=page_count,
             )
 
             doc.close()
@@ -109,7 +112,7 @@ class PDFProcessor(DocumentProcessor):
             logger.info(
                 "pdf_processed",
                 file_path=str(file_path),
-                pages=len(doc),
+                pages=page_count,
                 content_length=len(content),
             )
 

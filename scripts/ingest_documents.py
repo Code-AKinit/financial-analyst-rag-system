@@ -5,8 +5,13 @@ Processes all documents in data/raw/ and indexes them in the vector store.
 """
 
 import sys
+import io
 from pathlib import Path
 from typing import List
+
+# Fix Unicode encoding for Windows console
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
